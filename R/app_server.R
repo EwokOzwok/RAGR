@@ -158,49 +158,66 @@ app_server <- function(input, output, session) {
   })
 
   observe({
-    req(input$file)  # Ensure a file is uploaded before proceeding
+    req(input$file)
 
-    # Use a more explicit temporary file path
+    # Use system temporary directory
     upload_dir <- "/tmp/shiny-uploads"
 
-    # Ensure the directory exists
+    # Ensure directory exists
     if (!dir.exists(upload_dir)) {
-      dir.create(upload_dir, recursive = TRUE, mode = "0777")
+      tryCatch({
+        dir.create(upload_dir, recursive = TRUE, mode = "0777")
+        print(paste("Created directory:", upload_dir))
+      }, error = function(e) {
+        print(paste("Failed to create directory:", e$message))
+      })
     }
 
-    # Create a new filename to avoid conflicts
-    tmp_file <- file.path(upload_dir, paste0("upload_", format(Sys.time(), "%Y%m%d_%H%M%S"), "_", input$file$name))
+    # Generate unique filename
+    tmp_file <- file.path(upload_dir, paste0("upload_",
+                                             format(Sys.time(), "%Y%m%d_%H%M%S"),
+                                             "_",
+                                             input$file$name))
 
-    # Copy the uploaded file to the new location
-    file.copy(input$file$datapath, tmp_file, overwrite = TRUE)
+    # Copy file with error handling
+    tryCatch({
+      # Verify source file exists
+      if (!file.exists(input$file$datapath)) {
+        stop("Source file does not exist")
+      }
 
-    # Verify file exists and is readable
-    if (file.exists(tmp_file)) {
-      # Set permissions to ensure readability
+      # Copy file
+      file.copy(input$file$datapath, tmp_file, overwrite = TRUE)
+
+      # Verify destination file
+      if (!file.exists(tmp_file)) {
+        stop("Failed to copy file to destination")
+      }
+
+      # Set permissions
       Sys.chmod(tmp_file, mode = "0666")
 
-      # Proceed with processing the PDF
-      text <- tryCatch({
-        pdf_text(tmp_file)
-      }, error = function(e) {
-        # Log the full error for debugging
-        print(paste("PDF processing error:", e$message))
-        showNotification("Error processing PDF. Please try again.", type = "error")
-        return(NULL)
-      })
+      # Log successful file copy
+      print(paste("File copied to:", tmp_file))
 
-      if (!is.null(text)) {
-        pdf_text_content(text)
+      # Process PDF
+      text <- pdf_text(tmp_file)
+      pdf_text_content(text)
 
-        # Optional: Clean up the temporary file after processing
-        # Uncomment if you want to remove the file after use
-        # on.exit(unlink(tmp_file))
-      }
-    } else {
-      showNotification("Could not save uploaded file. Check permissions.", type = "error")
-    }
-  })
-  # observe({
+    }, error = function(e) {
+      # Comprehensive error logging
+      print("File upload error:")
+      print(paste("Source path:", input$file$datapath))
+      print(paste("Destination path:", tmp_file))
+      print(paste("Error message:", e$message))
+
+      # Show user-friendly notification
+      showNotification(
+        "Error uploading file. Please try again.",
+        type = "error"
+      )
+    })
+  })  # observe({
   #   req(input$file)  # Ensure a file is uploaded before proceeding
   #
   #   Sys.sleep(0.5)  # Adjust as necessary, but be cautious with responsiveness
