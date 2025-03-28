@@ -90,154 +90,194 @@ app_server <- function(input, output, session) {
           intensity = 5,
           hover = TRUE,
           f7Card(
-            f7Align(h3("Step 1: Upload a .pdf of a Scientific Article or Book Chapter (~40pg MAX)"), side = c("center")),
+            f7Align(h3("Step 1: Upload a .pdf to chat with (~200pg MAX)"), side = c("center")),
             br(),
-            # Drag-and-Drop Zone
-            div(id = "dropzone", "Drag & drop your PDF here or click"),
-            fileInput("file", label = NULL, accept = ".pdf", multiple = FALSE),  # Hiding original file input field
+
+            # Hidden file input
+            tags$input(id = "fileInput", type = "file", style = "display: none;"),
 
             # Placeholder for custom error message
-            div(id = "custom-error", class = "upload-error", style = "display: none;"),
+            div(id = "custom-error", class = "upload-error", style = "display: none; color: red;"),
 
-            # Placeholder for file upload status
-            textOutput("status"),
-
+            # Drag-and-Drop Zone
+            div(id = "dropzone",
+                "Drag & drop your PDF here or click to upload",
+                style = "border: 2px dashed #ccc;
+                        padding: 20px;
+                        text-align: center;
+                        cursor: pointer;
+                        margin: 10px;  /* Adjusted margins */
+                        box-sizing: border-box;
+                        width: calc(100% - 20px);  /* Subtract total horizontal margin */
+                        max-width: 100%;
+                        overflow: hidden;  /* Prevent content from overflowing */
+                        word-wrap: break-word;  /* Break long words if necessary */
+                        white-space: normal;  /* Allow text to wrap */"),
             # JavaScript to handle drag-and-drop functionality with enhancements
             tags$script(HTML("
-            $(document).on('dragover', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              $('#dropzone').addClass('drag-over');
+        $(document).ready(function() {
+            var dropzone = $('#dropzone');
+            var fileInput = $('#fileInput');
+
+            // Open file picker on click
+            dropzone.on('click', function() {
+                fileInput.click();
             });
 
-            $(document).on('dragleave', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              $('#dropzone').removeClass('drag-over');
-            });
-
-            $('#dropzone').on('drop', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              $('#dropzone').removeClass('drag-over');
-
-              var files = e.originalEvent.dataTransfer.files;
-              console.log('Files dropped:', files);  // Log dropped files for debugging
-
-              // Set the dropped file to the fileInput with a slight delay
-              setTimeout(function() {
-                $('#file').prop('files', files);
-                $('#file').trigger('change');
-              }, 50);
-            });
-
-            $('#dropzone').on('click', function() {
-              $('#file').click();  // Simulate file input click when dropzone is clicked
-            });
-
-            // Handle file input change and validate file size
-            $('#file').on('change', function() {
-              console.log('File input change triggered:', $(this)[0].files);  // Log file input change
-
-              if ($(this)[0].files.length > 0) {
-                var file = $(this)[0].files[0];
-                if (file.size > 5048576) {  // Example max size of 1MB (adjust as needed)
-                  $('#custom-error').text('Maximum upload size exceeded').show();
-                } else {
-                  $('#custom-error').hide();
+            // Handle file selection via file input
+            fileInput.on('change', function(e) {
+                var files = e.target.files;
+                if (files.length > 0) {
+                    uploadFile(files[0]);
                 }
-              } else {
-                $('#custom-error').hide();
-              }
             });
-          "))
+
+            // Drag-over event to allow dropping
+            dropzone.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.addClass('drag-over');
+            });
+
+            // Drag-leave event
+            dropzone.on('dragleave', function(e) {
+                dropzone.removeClass('drag-over');
+            });
+
+            // Drop event
+            dropzone.on('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.removeClass('drag-over');
+
+                var files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) {
+                    uploadFile(files[0]);
+                }
+            });
+
+            // Function to handle file upload
+            function uploadFile(file) {
+                var formData = new FormData();
+                formData.append('file', file);
+
+                $.ajax({
+                    url: 'https://evanozmat.com/ragr_upload', // Your Plumber API endpoint
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log('File uploaded successfully:', response);
+                        Shiny.setInputValue('upload_complete', true, {priority: 'event'});
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('File upload failed:', error);
+                        $('#custom-error').text('File upload failed.').show();
+                    }
+                });
+            }
+        });
+      "))
           )
         )
       )
     )
   })
+      observeEvent(input$upload_complete, {
+        output$StepOne <- renderUI({})
+        output$StepThree <- renderUI({
+                    tagList(
+                      f7Block(
+                        f7Shadow(
+                          intensity = 5,
+                          hover = TRUE,
+                          f7Card(
+                            f7Align(h3("PDF Successfully Initialized!"), side = c("center")),
+                            br(),
+                            f7Button("start_chat", "Start Chatting with your PDF"),
+                          )
+                        )
+                      )
+                    )
+                  })
 
-
-
-  observe({
-    req(input$file)
-      Sys.sleep(0.5)  # Adjust as necessary, but be cautious with responsiveness
-
-      # Save the uploaded file to a temporary location
-      tmp_file <- input$file$datapath
-      temp_file <- input$file$datapath
-      new_file_path <- paste0("/temp/", input$file$name)
-
-
-      # Proceed with processing the PDF
-      file.copy(temp_file, new_file_path)
-      print(paste("File saved to: ", new_file_path))
-      pdf_text_content(pdf_text(new_file_path))
-
-
-
-  })
-
-
-
-
-  observeEvent(input$start_rag,{
-
-    rag_data <- list(
-      text = pdf_text_content()
-    )
-
-    # Make async HTTP request
-    promise <- future({
-      tryCatch({
-        response <- POST(
-          "https://evanozmat.com/start_rag",
-          body = toJSON(rag_data, auto_unbox = TRUE),
-          encode = "json",
-          content_type_json()
-        )
-        content(response, "parsed")
-      }, error = function(e) {
-        stop(e)
+        # output$StepTwo <- renderUI({
+        #   tagList(
+        #     f7Block(
+        #       f7Shadow(
+        #         intensity = 5,
+        #         hover = TRUE,
+        #         f7Card(
+        #           f7Align(h3("PDF Successfully Uploaded!"), side = c("center")),
+        #           br(),
+        #           f7Button("start_rag", "Initialize PDF")
+        #         )
+        #       )
+        #     )
+        #   )
+        # })
       })
-    })
-
-    resolve_promise(
-      promise,
-      success = function(result) {
-        print(result$status)
-
-        if (result$status == "SUCCESS") {
-          output$StepOne <- renderUI({})
-          output$StepTwo <- renderUI({})
-          output$StepThree <- renderUI({
-            tagList(
-              f7Block(
-                f7Shadow(
-                  intensity = 5,
-                  hover = TRUE,
-                  f7Card(
-                    f7Align(h3("PDF Successfully Initialized!"), side = c("center")),
-                    br(),
-                    f7Button("start_chat", "Start Chatting with your PDF"),
-                  )
-                )
-              )
-            )
-          })
 
 
 
-        }
-      },
-      error = function(err) {
-        ServerError <- paste("Error in communication with the server.", err, sep = " ")
-        print(ServerError)
-      }
-    )
-
-
-  })
+  # observeEvent(input$start_rag,{
+  #
+  #   rag_data <- list(
+  #     text = pdf_text_content()
+  #   )
+  #
+  #   # Make async HTTP request
+  #   promise <- future({
+  #     tryCatch({
+  #       response <- POST(
+  #         "https://evanozmat.com/start_rag",
+  #         body = toJSON(rag_data, auto_unbox = TRUE),
+  #         encode = "json",
+  #         content_type_json()
+  #       )
+  #       content(response, "parsed")
+  #     }, error = function(e) {
+  #       stop(e)
+  #     })
+  #   })
+  #
+  #   resolve_promise(
+  #     promise,
+  #     success = function(result) {
+  #       print(result$status)
+  #
+  #       if (result$status == "SUCCESS") {
+  #         output$StepOne <- renderUI({})
+  #         output$StepTwo <- renderUI({})
+  #         output$StepThree <- renderUI({
+  #           tagList(
+  #             f7Block(
+  #               f7Shadow(
+  #                 intensity = 5,
+  #                 hover = TRUE,
+  #                 f7Card(
+  #                   f7Align(h3("PDF Successfully Initialized!"), side = c("center")),
+  #                   br(),
+  #                   f7Button("start_chat", "Start Chatting with your PDF"),
+  #                 )
+  #               )
+  #             )
+  #           )
+  #         })
+  #
+  #
+  #
+  #       }
+  #     },
+  #     error = function(err) {
+  #       ServerError <- paste("Error in communication with the server.", err, sep = " ")
+  #       print(ServerError)
+  #     }
+  #   )
+  #
+  #
+  # })
 
   observeEvent(input$start_chat,{
     output$StepThree <- renderUI({})
@@ -289,14 +329,14 @@ observeEvent(input$submit_prompt,{
   Answer <- ""
 
   Prompt <- input$user_input
+  print(Prompt)
 
   sanitize_input <- function(input) {
     iconv(input, from = "UTF-8", to = "ASCII", sub = "") # Remove non-ASCII characters
   }
 
-  Prompt <- sanitize_input(Prompt)
+  # Prompt <- sanitize_input(Prompt)
 
-  print(Prompt)
   promise <- future({
     tryCatch({
       print("Starting POST request...")
