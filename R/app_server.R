@@ -160,108 +160,21 @@ app_server <- function(input, output, session) {
 
 
   observe({
-    if (is.null(input$file) || input$file$datapath == "") {
-
-      output$StepTwo <- renderUI({})
-      output$StepThree <- renderUI({})
-
-      return()  # Exit the observer if the file is not uploaded
-
-    } else {
+    req(input$file)
       Sys.sleep(0.5)  # Adjust as necessary, but be cautious with responsiveness
 
       # Save the uploaded file to a temporary location
       tmp_file <- input$file$datapath
-
+      temp_file <- input$file$datapath
+      new_file_path <- paste0("/temp/", input$file$name)
 
 
       # Proceed with processing the PDF
-      text <- pdf_text(tmp_file)
+      file.copy(temp_file, new_file_path)
+      print(paste("File saved to: ", new_file_path))
+      pdf_text_content(pdf_text(new_file_path))
 
 
-      # To print the number of pages
-      num_pages <- length(text)
-
-      print(num_pages)  # This prints the number of pages in the PDF
-      estimated_characters = 3200*num_pages
-      text_combined <- paste(text, collapse = " ")
-      print(nchar(text_combined))  # This prints the number of characters
-
-
-      token_rate <- round(1.48 * (estimated_characters / 15000), 0)
-
-      # print(paste("TOKEN RATE = ", token_rate))
-      post_token_count = remaining_tokens() - token_rate
-      # print(paste("REMAINING TOKENS = ", remaining_tokens()))
-      # print(paste("POST GEN TOKENS REMAINING = ", post_token_count))
-
-      output$StepTwo <- renderUI({
-        tagList(
-          f7Block(
-            f7Shadow(
-              intensity = 5,
-              hover = TRUE,
-              f7Card(
-                f7Align(h3("Step 2: Enter the Project Name & Email Address to receive the summary"), side=c("center")),
-                br(),
-                f7Text("project", label = NULL, value = NULL, placeholder = "My Project"),
-                br(),
-                f7Text("email", label = NULL, value = NULL, placeholder = "your_email@gmail.com"),
-                footer = NULL,
-                hairlines = FALSE, strong = TRUE, inset = FALSE, tablet = FALSE)))
-        )
-      })
-
-
-
-      output$character_output<-renderUI({
-        tagList(
-          f7Align(h3("TOKEN COST = ", token_rate, " token(s)", "(", nchar(text_combined), "Characters)", sep = ""), side = c("center")),
-          f7Align(h4("Your PDF contains ", nchar(text_combined), " characters", sep = ""), side = c("center")),
-          f7Align(h5("After generation, you will have ", post_token_count, " tokens left."), side = c("center")),
-
-        )
-      })
-
-      output$options_checkboxes<-renderUI({
-        tagList(
-          f7Checkbox("option_tldr", label = "TLDR Summary", value = T),
-          br(),
-          f7Checkbox("option_full", label = "Full Summary", value = T),
-          br(),
-          f7Checkbox("option_talkingpoints", label = "Talking Points", value = T),
-          br(),
-          f7Checkbox("option_discussionquestions", label = "Discussion Questions", value = T),
-          br(),
-          f7Checkbox("option_ppt", label = "Slides and Speaker Notes", value = F),
-          hr()
-        )
-      })
-
-
-
-      output$StepThree <- renderUI({
-        tagList(
-          f7Block(
-            f7Shadow(
-              intensity = 5,
-              hover = TRUE,
-              f7Card(
-                f7Align(h3("Step 3: Select Options & Generate"), side=c("center")),
-                f7Align(h4("Results take 2-5 minutes to arrive via email"), side=c("center")),
-                br(),
-                uiOutput("options_checkboxes"),
-                uiOutput("character_output"),
-                f7Checkbox('affirm_token_cost', "I agree to the cost above"),
-                br(),
-                br(),
-                f7Button("generate", "Summarize and Send Results"),
-                footer = NULL,
-                hairlines = FALSE, strong = TRUE, inset = FALSE, tablet = FALSE)))
-        )
-      })
-
-    }
 
   })
 
