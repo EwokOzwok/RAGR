@@ -1,0 +1,23 @@
+FROM rocker/verse:4.4
+
+LABEL maintainer="Evan Ozmat <eozmat@albany.edu>"
+
+# Set environment variables to avoid prompts during package installations
+ENV DEBIAN_FRONTEND=noninteractive
+
+
+COPY shinyMobile_1.0.1.tgz /
+
+# basic shiny functionality
+RUN R -q -e "install.packages(c('shiny', 'rmarkdown', 'shinyjs', 'rclipboard', 'shinyalert'));install.packages('shinyMobile_1.0.1.tgz', repos=NULL, type = 'source')"
+
+
+
+# install dependencies of the app
+RUN R -q -e "install.packages('remotes',repos='https://cloud.r-project.org/'); remotes::install_github('EwokOzwok/RAGR', force = T); remove.packages('shinyMobile');install.packages('shinyMobile_1.0.1.tgz', repos=NULL, type = 'source')"
+
+
+EXPOSE 5098
+
+CMD ["R", "-q", "-e", "options('shiny.port'=5098,shiny.host='0.0.0.0');library(RAGR);RAGR::run_app()"]
+
