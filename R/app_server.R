@@ -325,81 +325,148 @@ app_server <- function(input, output, session) {
     HTML(chat_log())
   })
 
-observeEvent(input$submit_prompt,{
-  req(input$user_input)
-  user_input = paste("<br><b>User:</b>", input$user_input)
-  chat_log(paste(chat_log(),user_input, sep = ""))
-  updateF7TextArea("user_input", value = "",  placeholder = "Type here!", session = session)
-
-  # Show the custom preloader when the button is pressed
-  runjs("$('#custom-preloader').fadeIn();")
-
-
-  # Send the prompt to the Flask model
-  Answer <- ""
-
-  Prompt <- input$user_input
-  print(Prompt)
-
-  sanitize_input <- function(input) {
-    iconv(input, from = "UTF-8", to = "ASCII", sub = "") # Remove non-ASCII characters
-  }
-
-  # Prompt <- sanitize_input(Prompt)
-
-  promise <- future({
-    tryCatch({
-      print("Starting POST request...")
-
-      response <- POST(
-        "https://evanozmat.com/process_ragr",
-        body = toJSON(list(prompt_text = Prompt), auto_unbox = TRUE),
-        encode = "json",
-        content_type_json()
-      )
-
-      print("POST request completed.")
-      content(response, "parsed", encoding = "UTF-8")
-    }, error = function(e) {
-      print(paste("Error during POST request:", e$message))
-      stop(e)
-    })
-  })
-
-  resolve_promise(
-    promise,
-    success = function(result) {
-      # Hide the loading message and update the text area with the response
-      print("Promise resolved successfully.")
-      ragr_response <- as.character(result$result)
-      print(ragr_response)
-      ragr_response = paste("<br><b>ragR:</b>", ragr_response)
-      chat_log(paste(chat_log(),ragr_response, sep = ""))
-      # Scroll to bottom using JavaScript when the button is clicked
-      runjs('
-      document.getElementById("chat_log").scrollTop = document.getElementById("chat_log").scrollHeight;
-      ')
-
-
-      # Hide the preloader after the answer is received
-      runjs("$('#custom-preloader').fadeOut();")
-    },
-    error = function(err) {
-      # In case of error, hide the loading message and show an alert
-      print(paste("Promise rejected with error:", err))
-      runjs("$('#custom-preloader').fadeOut();")
-      showModal(modalDialog(
-        title = "Error",
-        paste("An error occurred while processing your request:", err$message),
-        easyClose = TRUE,
-        footer = NULL
-      ))
+  observeEvent(input$submit_prompt,{
+    req(input$user_input)
+    user_input = paste("<br><b>User:</b>", input$user_input)
+    chat_log(paste(chat_log(),user_input, sep = ""))
+    updateF7TextArea("user_input", value = "",  placeholder = "Type here!", session = session)
+    # Show the custom preloader when the button is pressed
+    runjs("$('#custom-preloader').fadeIn();")
+    # Send the prompt to the Flask model
+    Answer <- ""
+    Prompt <- input$user_input
+    print(Prompt)
+    sanitize_input <- function(input) {
+      iconv(input, from = "UTF-8", to = "ASCII", sub = "") # Remove non-ASCII characters
     }
-  )
+    # Prompt <- sanitize_input(Prompt)
+    promise <- future({
+      tryCatch({
+        print("Starting POST request...")
+        response <- POST(
+          "https://evanozmat.com/process_ragr",
+          body = toJSON(list(prompt_text = Prompt), auto_unbox = TRUE),
+          encode = "json",
+          content_type_json()
+        )
+        print("POST request completed.")
+        content(response, "parsed", encoding = "UTF-8")
+      }, error = function(e) {
+        print(paste("Error during POST request:", e$message))
+        stop(e)
+      })
+    })
+    resolve_promise(
+      promise,
+      success = function(result) {
+        # Hide the loading message and update the text area with the response
+        print("Promise resolved successfully.")
+        ragr_response <- as.character(result$result)
+        print(ragr_response)
+        ragr_response = paste("<br><b>ragR:</b>", ragr_response)
+        chat_log(paste(chat_log(),ragr_response, sep = ""))
 
-
-
-})
+        # Use a slight delay and more robust scrolling method
+        runjs('
+        setTimeout(function() {
+          var chatLog = document.getElementById("chat_log");
+          if (chatLog) {
+            chatLog.scrollTop = chatLog.scrollHeight;
+          }
+        }, 50);
+      ')
+        # Hide the preloader after the answer is received
+        runjs("$('#custom-preloader').fadeOut();")
+      },
+      error = function(err) {
+        # In case of error, hide the loading message and show an alert
+        print(paste("Promise rejected with error:", err$message))
+        runjs("$('#custom-preloader').fadeOut();")
+        showModal(modalDialog(
+          title = "Error",
+          paste("An error occurred while processing your request:", err$message),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }
+    )
+  })
+# observeEvent(input$submit_prompt,{
+#   req(input$user_input)
+#   user_input = paste("<br><b>User:</b>", input$user_input)
+#   chat_log(paste(chat_log(),user_input, sep = ""))
+#   updateF7TextArea("user_input", value = "",  placeholder = "Type here!", session = session)
+#
+#   # Show the custom preloader when the button is pressed
+#   runjs("$('#custom-preloader').fadeIn();")
+#
+#
+#   # Send the prompt to the Flask model
+#   Answer <- ""
+#
+#   Prompt <- input$user_input
+#   print(Prompt)
+#
+#   sanitize_input <- function(input) {
+#     iconv(input, from = "UTF-8", to = "ASCII", sub = "") # Remove non-ASCII characters
+#   }
+#
+#   # Prompt <- sanitize_input(Prompt)
+#
+#   promise <- future({
+#     tryCatch({
+#       print("Starting POST request...")
+#
+#       response <- POST(
+#         "https://evanozmat.com/process_ragr",
+#         body = toJSON(list(prompt_text = Prompt), auto_unbox = TRUE),
+#         encode = "json",
+#         content_type_json()
+#       )
+#
+#       print("POST request completed.")
+#       content(response, "parsed", encoding = "UTF-8")
+#     }, error = function(e) {
+#       print(paste("Error during POST request:", e$message))
+#       stop(e)
+#     })
+#   })
+#
+#   resolve_promise(
+#     promise,
+#     success = function(result) {
+#       # Hide the loading message and update the text area with the response
+#       print("Promise resolved successfully.")
+#       ragr_response <- as.character(result$result)
+#       print(ragr_response)
+#       ragr_response = paste("<br><b>ragR:</b>", ragr_response)
+#       chat_log(paste(chat_log(),ragr_response, sep = ""))
+#
+#       # Wait until content is fully updated before scrolling to the bottom
+#       runjs('
+#         var chatLog = document.getElementById("chat_log");
+#         chatLog.scrollTop = chatLog.scrollHeight;
+#       ')
+#
+#       # Hide the preloader after the answer is received
+#       runjs("$('#custom-preloader').fadeOut();")
+#     },
+#     error = function(err) {
+#       # In case of error, hide the loading message and show an alert
+#       print(paste("Promise rejected with error:", err))
+#       runjs("$('#custom-preloader').fadeOut();")
+#       showModal(modalDialog(
+#         title = "Error",
+#         paste("An error occurred while processing your request:", err$message),
+#         easyClose = TRUE,
+#         footer = NULL
+#       ))
+#     }
+#   )
+#
+#
+#
+# })
 
 output$loading_screen <- renderUI({
   tagList(
