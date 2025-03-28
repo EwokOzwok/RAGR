@@ -157,111 +157,115 @@ app_server <- function(input, output, session) {
     )
   })
 
+
+
   observe({
-    req(input$file)
+    if (is.null(input$file) || input$file$datapath == "") {
 
-    # Use system temporary directory
-    upload_dir <- "/tmp/shiny-uploads"
+      output$StepTwo <- renderUI({})
+      output$StepThree <- renderUI({})
 
-    # Ensure directory exists
-    if (!dir.exists(upload_dir)) {
-      tryCatch({
-        dir.create(upload_dir, recursive = TRUE, mode = "0777")
-        print(paste("Created directory:", upload_dir))
-      }, error = function(e) {
-        print(paste("Failed to create directory:", e$message))
+      return()  # Exit the observer if the file is not uploaded
+
+    } else {
+      Sys.sleep(0.5)  # Adjust as necessary, but be cautious with responsiveness
+
+      # Save the uploaded file to a temporary location
+      tmp_file <- input$file$datapath
+
+
+
+      # Proceed with processing the PDF
+      text <- pdf_text(tmp_file)
+
+
+      # To print the number of pages
+      num_pages <- length(text)
+
+      print(num_pages)  # This prints the number of pages in the PDF
+      estimated_characters = 3200*num_pages
+      text_combined <- paste(text, collapse = " ")
+      print(nchar(text_combined))  # This prints the number of characters
+
+
+      token_rate <- round(1.48 * (estimated_characters / 15000), 0)
+
+      # print(paste("TOKEN RATE = ", token_rate))
+      post_token_count = remaining_tokens() - token_rate
+      # print(paste("REMAINING TOKENS = ", remaining_tokens()))
+      # print(paste("POST GEN TOKENS REMAINING = ", post_token_count))
+
+      output$StepTwo <- renderUI({
+        tagList(
+          f7Block(
+            f7Shadow(
+              intensity = 5,
+              hover = TRUE,
+              f7Card(
+                f7Align(h3("Step 2: Enter the Project Name & Email Address to receive the summary"), side=c("center")),
+                br(),
+                f7Text("project", label = NULL, value = NULL, placeholder = "My Project"),
+                br(),
+                f7Text("email", label = NULL, value = NULL, placeholder = "your_email@gmail.com"),
+                footer = NULL,
+                hairlines = FALSE, strong = TRUE, inset = FALSE, tablet = FALSE)))
+        )
       })
+
+
+
+      output$character_output<-renderUI({
+        tagList(
+          f7Align(h3("TOKEN COST = ", token_rate, " token(s)", "(", nchar(text_combined), "Characters)", sep = ""), side = c("center")),
+          f7Align(h4("Your PDF contains ", nchar(text_combined), " characters", sep = ""), side = c("center")),
+          f7Align(h5("After generation, you will have ", post_token_count, " tokens left."), side = c("center")),
+
+        )
+      })
+
+      output$options_checkboxes<-renderUI({
+        tagList(
+          f7Checkbox("option_tldr", label = "TLDR Summary", value = T),
+          br(),
+          f7Checkbox("option_full", label = "Full Summary", value = T),
+          br(),
+          f7Checkbox("option_talkingpoints", label = "Talking Points", value = T),
+          br(),
+          f7Checkbox("option_discussionquestions", label = "Discussion Questions", value = T),
+          br(),
+          f7Checkbox("option_ppt", label = "Slides and Speaker Notes", value = F),
+          hr()
+        )
+      })
+
+
+
+      output$StepThree <- renderUI({
+        tagList(
+          f7Block(
+            f7Shadow(
+              intensity = 5,
+              hover = TRUE,
+              f7Card(
+                f7Align(h3("Step 3: Select Options & Generate"), side=c("center")),
+                f7Align(h4("Results take 2-5 minutes to arrive via email"), side=c("center")),
+                br(),
+                uiOutput("options_checkboxes"),
+                uiOutput("character_output"),
+                f7Checkbox('affirm_token_cost', "I agree to the cost above"),
+                br(),
+                br(),
+                f7Button("generate", "Summarize and Send Results"),
+                footer = NULL,
+                hairlines = FALSE, strong = TRUE, inset = FALSE, tablet = FALSE)))
+        )
+      })
+
     }
 
-    # Generate unique filename
-    tmp_file <- file.path(upload_dir, paste0("upload_",
-                                             format(Sys.time(), "%Y%m%d_%H%M%S"),
-                                             "_",
-                                             input$file$name))
+  })
 
-    # Copy file with error handling
-    tryCatch({
-      # Verify source file exists
-      if (!file.exists(input$file$datapath)) {
-        stop("Source file does not exist")
-      }
 
-      # Copy file
-      file.copy(input$file$datapath, tmp_file, overwrite = TRUE)
-
-      # Verify destination file
-      if (!file.exists(tmp_file)) {
-        stop("Failed to copy file to destination")
-      }
-
-      # Set permissions
-      Sys.chmod(tmp_file, mode = "0666")
-
-      # Log successful file copy
-      print(paste("File copied to:", tmp_file))
-
-      # Process PDF
-      text <- pdf_text(tmp_file)
-      pdf_text_content(text)
-
-    }, error = function(e) {
-      # Comprehensive error logging
-      print("File upload error:")
-      print(paste("Source path:", input$file$datapath))
-      print(paste("Destination path:", tmp_file))
-      print(paste("Error message:", e$message))
-
-      # Show user-friendly notification
-      showNotification(
-        "Error uploading file. Please try again.",
-        type = "error"
-      )
-    })
-  })  # observe({
-  #   req(input$file)  # Ensure a file is uploaded before proceeding
-  #
-  #   Sys.sleep(0.5)  # Adjust as necessary, but be cautious with responsiveness
-  #
-  #   # Save the uploaded file to a temporary location
-  #   tmp_file <- input$file$datapath
-  #
-  #   # Check if the file exists before proceeding
-  #   if (file.exists(tmp_file)) {
-  #     # Proceed with processing the PDF
-  #     text <- tryCatch({
-  #       pdf_text(tmp_file)
-  #     }, error = function(e) {
-  #       showNotification("Error processing PDF. Please try again.", type = "error")
-  #       return(NULL)
-  #     })
-  #
-  #     if (!is.null(text)) {
-  #       pdf_text_content(text)
-  #       # print(text)
-  #
-  #       output$StepTwo <- renderUI({
-  #         tagList(
-  #           f7Block(
-  #             f7Shadow(
-  #               intensity = 5,
-  #               hover = TRUE,
-  #               f7Card(
-  #                 f7Align(h3("PDF Uploaded Successfully"), side = c("center")),
-  #                 br(),
-  #                 f7Button("start_rag", "Initialize PDF for Chat"),
-  #               )
-  #             )
-  #           )
-  #         )
-  #       })
-  #
-  #
-  #
-  #     }
-  #   } else {
-  #     showNotification("Uploaded file not found. Please re-upload.", type = "error")
-  #   }
-  # })
 
 
   observeEvent(input$start_rag,{
