@@ -16,13 +16,13 @@ app_ui <- function(request) {
     # Your application UI logic
 
     shinyMobile::f7Page(
-      title = "RAGR",
+      title = "ragR",
       options = list(theme=c("auto"), dark=TRUE, preloader = T,  pullToRefresh=F),
       allowPWA=F,
       # Custom 'Generating Note' Message UI
       useShinyjs(),
 
-      # uiOutput("busy_message"),
+      uiOutput("busy_message"),
 
 
       # uiOutput("busy_message"),
@@ -30,17 +30,20 @@ app_ui <- function(request) {
       f7TabLayout(
 
         navbar = f7Navbar(
-          title= "Happy2Share"),
+          title= "ragR"),
 
         f7Tabs(
           animated = TRUE,
           id = "tabs",
           f7Tab(
-            tabName = "Happy2Share",
+            tabName = "ragR",
             icon = f7Icon("house_fill"),
             active = TRUE,
             hidden= F,
             uiOutput("StepOne"),
+            uiOutput("StepTwo"),
+            uiOutput("StepThree"),
+            uiOutput("StepFour"),
           )
         )
       )
