@@ -156,10 +156,13 @@ app_server <- function(input, output, session) {
                 }
             });
 
-            // Function to handle file upload
             function uploadFile(file) {
                 var formData = new FormData();
                 formData.append('file', file);
+
+                // Show loading icon and text
+                $('#loading-icon').show();
+                $('#custom-error').text('Uploading...').show();
 
                 $.ajax({
                     url: 'https://evanozmat.com/ragr_upload', // Your Plumber API endpoint
@@ -169,11 +172,18 @@ app_server <- function(input, output, session) {
                     contentType: false,
                     success: function(response) {
                         console.log('File uploaded successfully:', response);
+                        // Hide error text and show success message or indicator
+                        $('#custom-error').text('Upload successful!').show();
                         Shiny.setInputValue('upload_complete', true, {priority: 'event'});
                     },
                     error: function(xhr, status, error) {
                         console.error('File upload failed:', error);
+                        // Display error only if upload fails
                         $('#custom-error').text('File upload failed.').show();
+                    },
+                    complete: function() {
+                        // Hide loading icon after upload (whether success or error)
+                        $('#loading-icon').hide();
                     }
                 });
             }
@@ -365,6 +375,10 @@ observeEvent(input$submit_prompt,{
       print(ragr_response)
       ragr_response = paste("<br><b>ragR:</b>", ragr_response)
       chat_log(paste(chat_log(),ragr_response, sep = ""))
+      # Scroll to bottom using JavaScript when the button is clicked
+      runjs('
+      document.getElementById("chat_log").scrollTop = document.getElementById("chat_log").scrollHeight;
+      ')
 
 
       # Hide the preloader after the answer is received
@@ -387,7 +401,31 @@ observeEvent(input$submit_prompt,{
 
 })
 
-
+output$loading_screen <- renderUI({
+  tagList(
+    tags$head(
+      # Add custom CSS if needed
+      tags$style(HTML("
+        #loading-icon {
+          position: fixed;
+          top: 25%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          display: none;
+          z-index: 9999;
+        }
+      "))
+    ),
+    # The loading icon div
+    tags$div(
+      id = "loading-icon",
+      tags$img(
+        src = "https://ewokozwok.github.io/myexternalresources/bars-scale.svg",
+        alt = "Uploading..."
+      )
+    )
+  )
+})
 
 output$busy_message <- renderUI({
   # Custom Pre Loader Message

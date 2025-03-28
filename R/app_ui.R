@@ -21,7 +21,7 @@ app_ui <- function(request) {
       allowPWA=F,
       # Custom 'Generating Note' Message UI
       useShinyjs(),
-
+      uiOutput("loading_screen"),
       uiOutput("busy_message"),
 
 
