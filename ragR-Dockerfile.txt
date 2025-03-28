@@ -1,12 +1,24 @@
 FROM rocker/verse:4.4
-
 LABEL maintainer="Evan Ozmat <eozmat@albany.edu>"
 
-# Set environment variables to avoid prompts during package installations
+# Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TMPDIR=/tmp/shiny-uploads
+
+# Create a dedicated temporary upload directory
+RUN mkdir -p $TMPDIR && chmod 777 $TMPDIR
+
+RUN apt-get update && apt-get install -y libpoppler-cpp-dev
 
 
-COPY shinyMobile_1.0.1.tgz /
+COPY shinyMobile_1.0.1.tgz /app/
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Ensure that the /app directory is writable
+RUN chmod -R 777 /app
+
 
 # basic shiny functionality
 RUN R -q -e "install.packages(c('shiny', 'rmarkdown', 'shinyjs', 'rclipboard', 'shinyalert'));install.packages('shinyMobile_1.0.1.tgz', repos=NULL, type = 'source')"

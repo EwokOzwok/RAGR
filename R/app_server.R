@@ -157,52 +157,94 @@ app_server <- function(input, output, session) {
     )
   })
 
-
   observe({
     req(input$file)  # Ensure a file is uploaded before proceeding
 
-    Sys.sleep(0.5)  # Adjust as necessary, but be cautious with responsiveness
+    # Use a more explicit temporary file path
+    upload_dir <- "/tmp/shiny-uploads"
 
-    # Save the uploaded file to a temporary location
-    tmp_file <- input$file$datapath
+    # Ensure the directory exists
+    if (!dir.exists(upload_dir)) {
+      dir.create(upload_dir, recursive = TRUE, mode = "0777")
+    }
 
-    # Check if the file exists before proceeding
+    # Create a new filename to avoid conflicts
+    tmp_file <- file.path(upload_dir, paste0("upload_", format(Sys.time(), "%Y%m%d_%H%M%S"), "_", input$file$name))
+
+    # Copy the uploaded file to the new location
+    file.copy(input$file$datapath, tmp_file, overwrite = TRUE)
+
+    # Verify file exists and is readable
     if (file.exists(tmp_file)) {
+      # Set permissions to ensure readability
+      Sys.chmod(tmp_file, mode = "0666")
+
       # Proceed with processing the PDF
       text <- tryCatch({
         pdf_text(tmp_file)
       }, error = function(e) {
+        # Log the full error for debugging
+        print(paste("PDF processing error:", e$message))
         showNotification("Error processing PDF. Please try again.", type = "error")
         return(NULL)
       })
 
       if (!is.null(text)) {
         pdf_text_content(text)
-        # print(text)
 
-        output$StepTwo <- renderUI({
-          tagList(
-            f7Block(
-              f7Shadow(
-                intensity = 5,
-                hover = TRUE,
-                f7Card(
-                  f7Align(h3("PDF Uploaded Successfully"), side = c("center")),
-                  br(),
-                  f7Button("start_rag", "Initialize PDF for Chat"),
-                )
-              )
-            )
-          )
-        })
-
-
-
+        # Optional: Clean up the temporary file after processing
+        # Uncomment if you want to remove the file after use
+        # on.exit(unlink(tmp_file))
       }
     } else {
-      showNotification("Uploaded file not found. Please re-upload.", type = "error")
+      showNotification("Could not save uploaded file. Check permissions.", type = "error")
     }
   })
+  # observe({
+  #   req(input$file)  # Ensure a file is uploaded before proceeding
+  #
+  #   Sys.sleep(0.5)  # Adjust as necessary, but be cautious with responsiveness
+  #
+  #   # Save the uploaded file to a temporary location
+  #   tmp_file <- input$file$datapath
+  #
+  #   # Check if the file exists before proceeding
+  #   if (file.exists(tmp_file)) {
+  #     # Proceed with processing the PDF
+  #     text <- tryCatch({
+  #       pdf_text(tmp_file)
+  #     }, error = function(e) {
+  #       showNotification("Error processing PDF. Please try again.", type = "error")
+  #       return(NULL)
+  #     })
+  #
+  #     if (!is.null(text)) {
+  #       pdf_text_content(text)
+  #       # print(text)
+  #
+  #       output$StepTwo <- renderUI({
+  #         tagList(
+  #           f7Block(
+  #             f7Shadow(
+  #               intensity = 5,
+  #               hover = TRUE,
+  #               f7Card(
+  #                 f7Align(h3("PDF Uploaded Successfully"), side = c("center")),
+  #                 br(),
+  #                 f7Button("start_rag", "Initialize PDF for Chat"),
+  #               )
+  #             )
+  #           )
+  #         )
+  #       })
+  #
+  #
+  #
+  #     }
+  #   } else {
+  #     showNotification("Uploaded file not found. Please re-upload.", type = "error")
+  #   }
+  # })
 
 
   observeEvent(input$start_rag,{
