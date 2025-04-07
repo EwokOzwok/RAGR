@@ -20,8 +20,8 @@
 ##
 golem::fill_desc(
   pkg_name = "RAGR", # The name of the golem package containing the app (typically lowercase, no underscore or periods)
-  pkg_title = "PKG_TITLE", # What the Package Does (One Line, Title Case, No Period)
-  pkg_description = "PKG_DESC.", # What the package does (one paragraph).
+  pkg_title = "ragR", # What the Package Does (One Line, Title Case, No Period)
+  pkg_description = "Retrieval Augmented Generation (RAG) Shiny App", # What the package does (one paragraph).
   authors = person(
     given = "Evan", # Your First Name
     family = "Ozmat", # Your Last Name
