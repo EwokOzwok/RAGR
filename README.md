@@ -43,9 +43,10 @@ ragR is an R Shiny app with a Python backend, leveraging Retrieval-Augmented Gen
 2. Access the app at `http://localhost:5098`.
 
 ## Screenshots
-![Home Screen](screenshots/home.png)
-![PDF Upload](screenshots/upload.png)
-![Chat Interface](screenshots/chat.png)
+![Home Screen](screenshot1.png)
+![PDF Upload](screenshot2.png)
+![Start Chat](screenshot3.png)
+![Chat Interface](screenshot4.png)
 
 ## License
 This project is licensed under the Apache License.
