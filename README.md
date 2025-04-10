@@ -16,6 +16,7 @@ ragR is an R Shiny app with a Python backend, leveraging Retrieval-Augmented Gen
 - **Docker** (if deploying via Docker).
 - **R** and **R Shiny**.
 - **Python** (with Flask and exlammav2 installed).
+- **NVidia GPU** Pytorch and cuda >= 11.8
 
 ### Running the App Locally
 1. Install the app via R:
