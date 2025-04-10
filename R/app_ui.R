@@ -66,37 +66,8 @@ golem_add_external_resources <- function() {
   #   app_sys("app/www")
   # )
 
-
   tags$head(
-    tags$script(HTML("
-  Shiny.addCustomMessageHandler('redirect', function(message) {
-    window.location.href = message.url;
-  });
-")),
-
-
-    tags$script(HTML("
-        $(document).on('click', '#refresh_page', function() {
-          location.reload();  // Reload the current page
-        });
-      ")),
-
-
-
-
-
-    # favicon("https://ewokozwok.github.io/MassBaselineCleaner/gifs/ng_favicon"),
     tags$link(rel = "icon", type = "image/x-icon", href = "https://ewokozwok.github.io/MassBaselineCleaner/gifs/h2s_icon.ico"),
-
-    # Include Swiper CSS and JS
-    tags$link(rel = "stylesheet", href = "https://unpkg.com/swiper/swiper-bundle.min.css"),
-    tags$script(src = "https://unpkg.com/swiper/swiper-bundle.min.js"),
-    tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.css"),
-    tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"),
-
-
     HTML('<link rel="stylesheet" type="text/css" href="https://ewokozwok.github.io/myexternalresources/framework7.bundle.min.css">')
-
-
   )
 }
