@@ -266,7 +266,7 @@ def process_prompt():
     
     # Wait for response with timeout
     try:
-        result = response_queue.get(timeout=60)  # 60 seconds timeout
+        result = response_queue.get(timeout=120)  # 60 seconds timeout
         return jsonify(result)
     except queue.Empty:
         return jsonify({"error": "Request timed out"}), 504
