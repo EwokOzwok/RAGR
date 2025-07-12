@@ -165,7 +165,7 @@ app_server <- function(input, output, session) {
                 $('#custom-error').text('Uploading...').show();
 
                 $.ajax({
-                    url: 'https://ng.cliniciansfirst.org/ragr_upload', // Your Plumber API endpoint
+                    url: 'https://evanozmat.com/ragr_upload', // Your Plumber API endpoint
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -241,7 +241,7 @@ app_server <- function(input, output, session) {
   #   promise <- future({
   #     tryCatch({
   #       response <- POST(
-  #         "https://ng.cliniciansfirst.org/start_rag",
+  #         "https://evanozmat.com/start_rag",
   #         body = toJSON(rag_data, auto_unbox = TRUE),
   #         encode = "json",
   #         content_type_json()
@@ -344,7 +344,7 @@ app_server <- function(input, output, session) {
       tryCatch({
         print("Starting POST request...")
         response <- POST(
-          "https://ng.cliniciansfirst.org/process_ragr",
+          "https://evanozmat.com/process_ragr",
           body = toJSON(list(prompt_text = Prompt), auto_unbox = TRUE),
           encode = "json",
           content_type_json()
@@ -418,7 +418,7 @@ app_server <- function(input, output, session) {
 #       print("Starting POST request...")
 #
 #       response <- POST(
-#         "https://ng.cliniciansfirst.org/process_ragr",
+#         "https://evanozmat.com/process_ragr",
 #         body = toJSON(list(prompt_text = Prompt), auto_unbox = TRUE),
 #         encode = "json",
 #         content_type_json()
