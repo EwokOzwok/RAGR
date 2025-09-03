@@ -124,7 +124,8 @@ python app.py
 ### 2. Start the ShinyMobile frontend
 
 ```r
-shiny::runApp("frontend")
+remotes::install_github("EwokOzwok/RAGR")
+RAGR::run_app()
 ```
 
 ### 3. Open your browser
