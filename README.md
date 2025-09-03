@@ -123,8 +123,8 @@ cd ragr
 ### 1. Start the Flask backend
 
 ``` bash
-cd backend
-python app.py
+cd ragr
+python General_RAG_PROCESSOR_5099.py
 ```
 
 ### 2. Start the ShinyMobile frontend
