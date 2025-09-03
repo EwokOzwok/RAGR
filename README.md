@@ -152,24 +152,12 @@ LICENSE file for details.
 
 ### Upload Your PDF
 
-<figure>
-<img src="https://i.postimg.cc/sxK0XP1h/Upload.png"
-alt="Upload Interface" />
-<figcaption aria-hidden="true">Upload Interface</figcaption>
-</figure>
+![](https://i.postimg.cc/sxK0XP1h/Upload.png)
 
 ### Upload Successful
 
-<figure>
-<img src="https://i.postimg.cc/sDDNLL09/Start-Chat.png"
-alt="Chat Interface" />
-<figcaption aria-hidden="true">Chat Interface</figcaption>
-</figure>
+![](https://i.postimg.cc/sDDNLL09/Start-Chat.png)
 
 ### Interactive Chat
 
-<figure>
-<img src="https://i.postimg.cc/9MhxYg79/Chat.png"
-alt="Chat Interface" />
-<figcaption aria-hidden="true">Chat Interface</figcaption>
-</figure>
+![](https://i.postimg.cc/9MhxYg79/Chat.png)

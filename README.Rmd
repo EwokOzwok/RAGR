@@ -143,13 +143,13 @@ This project is licensed under the **Apache License 2.0**. See the LICENSE file 
 ## Screenshots
 
 ### Upload Your PDF
-![Upload Interface](https://i.postimg.cc/sxK0XP1h/Upload.png)
+![](https://i.postimg.cc/sxK0XP1h/Upload.png)
 
 ### Upload Successful
-![Chat Interface](https://i.postimg.cc/sDDNLL09/Start-Chat.png)  
+![](https://i.postimg.cc/sDDNLL09/Start-Chat.png)  
 
 ### Interactive Chat
-![Chat Interface](https://i.postimg.cc/9MhxYg79/Chat.png)  
+![](https://i.postimg.cc/9MhxYg79/Chat.png)  
 
 
 
