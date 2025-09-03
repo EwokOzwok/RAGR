@@ -68,6 +68,6 @@ golem_add_external_resources <- function() {
 
   tags$head(
     tags$link(rel = "icon", type = "image/x-icon", href = "https://ewokozwok.github.io/MassBaselineCleaner/gifs/h2s_icon.ico"),
-    HTML('<link rel="stylesheet" type="text/css" href="https://ewokozwok.github.io/myexternalresources/framework7.bundle.min.css">')
+    # HTML('<link rel="stylesheet" type="text/css" href="https://ewokozwok.github.io/myexternalresources/framework7.bundle.min.css">')
   )
 }

@@ -165,7 +165,7 @@ app_server <- function(input, output, session) {
                 $('#custom-error').text('Uploading...').show();
 
                 $.ajax({
-                    url: 'https://evanozmat.com/ragr_upload', // Your Plumber API endpoint
+                    url: 'http://localhost:5099/ragr_upload', // Your Plumber API endpoint
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -344,7 +344,7 @@ app_server <- function(input, output, session) {
       tryCatch({
         print("Starting POST request...")
         response <- POST(
-          "https://evanozmat.com/process_ragr",
+          "http://localhost:5099/process_ragr",
           body = toJSON(list(prompt_text = Prompt), auto_unbox = TRUE),
           encode = "json",
           content_type_json()
