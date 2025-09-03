@@ -1,5 +1,5 @@
 # RAGR: Retrieval-Augmented Generation for PDFs
-================
+
 RAGR (**R**etrieval-**A**ugmented **G**eneration **R**eader) is an R
 Shiny app built with **shinyMobile** for the frontend and a **Flask +
 ExLlamaV2** backend. It allows users to interactively chat with the
