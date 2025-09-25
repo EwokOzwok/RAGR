@@ -1,5 +1,7 @@
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+
 import json
 import subprocess
 import queue
@@ -13,6 +15,7 @@ import gc
 from nacl.secret import SecretBox
 from nacl.exceptions import CryptoError
 import base64
+import numpy as np
 
 # ExLlamaV2 imports
 from exllamav2 import (
@@ -43,6 +46,7 @@ request_queue = queue.Queue()
 new_vector_store = None
 
 app = Flask(__name__)
+CORS(app)  # enables CORS for all routes and all origins
 
 # Thread-safe lock for model access
 model_lock = threading.Lock()
@@ -89,7 +93,7 @@ def initialize_model(model_path):
             get_gpu_memory()
             
             generator = ExLlamaV2BaseGenerator(model, cache, tokenizer)
-            
+
             print("Warming up...")
             with torch.inference_mode():
                 settings = ExLlamaV2Sampler.Settings()
@@ -141,7 +145,7 @@ def query_exllama(query, vector_store, tokens):
     Thread-safe query method for ExLlamaV2 
     """
     # Retrieve relevant documents
-    docs = vector_store.similarity_search(query, k=15)
+    docs = vector_store.similarity_search(query, k=10)
     
     # Extract and join context
     context = "\n\n".join([doc.page_content for doc in docs])
@@ -153,7 +157,7 @@ def query_exllama(query, vector_store, tokens):
         try:        
             settings = ExLlamaV2Sampler.Settings()
             settings.temperature = 0.7
-            settings.top_k = 40
+            settings.top_k = 10
             settings.token_repetition_penalty = 1.1
             
             with torch.inference_mode():
@@ -238,11 +242,11 @@ def process_pdf(pdf_path):
         chunk_overlap=200
     )
     chunks = text_splitter.split_documents(documents)
-    
-    # Create vector store for search
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vector_store = FAISS.from_documents(chunks, embeddings)
     
+    print(vector_store)
+
     return vector_store
 
 
@@ -291,7 +295,7 @@ def process_prompt():
 @app.route('/ragr_upload', methods=['POST'])
 def ragr_upload():
     global new_vector_store
-    UPLOAD_FOLDER = "/mnt/c/Users/Admin/Desktop/Ragr/temp"  # Change this to an existing path
+    UPLOAD_FOLDER = "/mnt/c/Users/eo276194/Desktop/Ragr/temp"  # Change this to an existing path
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
     # Check if a file is in the request
     if 'file' not in request.files:
@@ -324,7 +328,7 @@ def ragr_upload():
 if __name__ == '__main__':
     # Initialize the model before starting the server
     # initialize_model("/mnt/f/Models/v2/exllamaSepPrompts_8.0bpw/")
-    initialize_model("/mnt/f/Models/Mistral-7B-Instruct-v0.2-8.0bpw/")
+    initialize_model("/mnt/c/users/eo276194/desktop/Models/Mistral-7B-Instruct-v0.2_8.0bpw/")
 
 
     # Start worker threads
