@@ -14,11 +14,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the shinyMobile package tarball
-COPY shinyMobile_1.0.1.tgz /
+# COPY shinyMobile_1.0.1.tgz /
 
 # Install R packages
-RUN R -q -e "install.packages(c('shiny', 'rmarkdown', 'pdftools', 'shinyjs', 'callr', 'future', 'shinyalert')); \
-              install.packages('shinyMobile_1.0.1.tgz', repos=NULL, type = 'source')"
+RUN R -q -e "install.packages(c('shiny', 'rmarkdown', 'pdftools', 'shinyjs', 'callr', 'future', 'shinyalert', "shinyMobile"))"
 
 # Install dependencies of the app and app from GitHub
 RUN R -q -e "install.packages('remotes', repos='https://cloud.r-project.org/'); \

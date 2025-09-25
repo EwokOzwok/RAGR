@@ -363,7 +363,11 @@ app_server <- function(input, output, session) {
         print("Promise resolved successfully.")
         ragr_response <- as.character(result$result)
         print(ragr_response)
-        ragr_response = paste("<br><b>ragR:</b>", ragr_response)
+        ragr_response <- paste0(
+          "<br><b>ragR:</b><div style='white-space: pre-wrap;'>",
+          ragr_response,
+          "</div>"
+        )
         chat_log(paste(chat_log(),ragr_response, sep = ""))
 
         # Use a slight delay and more robust scrolling method
