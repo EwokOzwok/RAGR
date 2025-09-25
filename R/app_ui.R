@@ -39,7 +39,7 @@ app_ui <- function(request) {
             tabName = "ragR",
             icon = f7Icon("house_fill"),
             active = TRUE,
-            hidden= F,
+            hidden= T,
             uiOutput("StepOne"),
             uiOutput("StepTwo"),
             uiOutput("StepThree"),
