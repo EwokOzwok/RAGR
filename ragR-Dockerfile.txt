@@ -17,13 +17,11 @@ RUN apt-get update && apt-get install -y \
 # COPY shinyMobile_1.0.1.tgz /
 
 # Install R packages
-RUN R -q -e "install.packages(c('shiny', 'rmarkdown', 'pdftools', 'shinyjs', 'callr', 'future', 'shinyalert', "shinyMobile"))"
+RUN R -q -e "install.packages(c('shiny', 'rmarkdown', 'pdftools', 'shinyjs', 'callr', 'future', 'shinyalert', 'shinyMobile'))"
 
 # Install dependencies of the app and app from GitHub
 RUN R -q -e "install.packages('remotes', repos='https://cloud.r-project.org/'); \
-              remotes::install_github('EwokOzwok/RAGR', force = TRUE); \
-              remove.packages('shinyMobile'); \
-              install.packages('shinyMobile_1.0.1.tgz', repos=NULL, type = 'source')"
+              remotes::install_github('EwokOzwok/RAGR', force = TRUE)"
 
 
 # Expose ports
