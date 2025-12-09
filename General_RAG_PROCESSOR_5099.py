@@ -51,62 +51,62 @@ CORS(app)  # enables CORS for all routes and all origins
 # Thread-safe lock for model access
 model_lock = threading.Lock()
 
-def get_gpu_memory():
-    """Print GPU memory usage"""
-    if torch.cuda.is_available():
-        print(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
-        print(f"GPU memory reserved: {torch.cuda.memory_reserved() / 1024**2:.2f} MB")
+# def get_gpu_memory():
+#     """Print GPU memory usage"""
+#     if torch.cuda.is_available():
+#         print(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
+#         print(f"GPU memory reserved: {torch.cuda.memory_reserved() / 1024**2:.2f} MB")
 
-def initialize_model(model_path):
-    global model, cache, tokenizer, generator
-
-    with model_lock:
-        try:
-            print("Initializing model...")
-            
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                gc.collect()
-            
-            get_gpu_memory()
-            
-            config = ExLlamaV2Config()
-            config.model_dir = model_path
-            config.prepare()
-            
-            config.max_batch_size = 1
-            
-            print("Configuration prepared. GPU memory status:")
-            get_gpu_memory()
-            
-            model = ExLlamaV2(config)
-            tokenizer = ExLlamaV2Tokenizer(config)
-            
-            print("Model and tokenizer created. GPU memory status:")
-            get_gpu_memory()
-            
-            print("Loading model with auto-split...")
-            cache = ExLlamaV2Cache(model, lazy=True)
-            model.load_autosplit(cache)
-            
-            print("Model loaded. GPU memory status:")
-            get_gpu_memory()
-            
-            generator = ExLlamaV2BaseGenerator(model, cache, tokenizer)
-
-            print("Warming up...")
-            with torch.inference_mode():
-                settings = ExLlamaV2Sampler.Settings()
-                generator.generate_simple("Test", settings, 1)
-            
-            print("Model ready! Final GPU memory status:")
-            get_gpu_memory()
-            
-            return generator
-            
-        except Exception as e:
-            print(f"Error during initialization: {str(e)}")
-            raise
+# def initialize_model(model_path):
+#     global model, cache, tokenizer, generator
+# 
+#     with model_lock:
+#         try:
+#             print("Initializing model...")
+#             
+#             if torch.cuda.is_available():
+#                 torch.cuda.empty_cache()
+#                 gc.collect()
+#             
+#             get_gpu_memory()
+#             
+#             config = ExLlamaV2Config()
+#             config.model_dir = model_path
+#             config.prepare()
+#             
+#             config.max_batch_size = 1
+#             
+#             print("Configuration prepared. GPU memory status:")
+#             get_gpu_memory()
+#             
+#             model = ExLlamaV2(config)
+#             tokenizer = ExLlamaV2Tokenizer(config)
+#             
+#             print("Model and tokenizer created. GPU memory status:")
+#             get_gpu_memory()
+#             
+#             print("Loading model with auto-split...")
+#             cache = ExLlamaV2Cache(model, lazy=True)
+#             model.load_autosplit(cache)
+#             
+#             print("Model loaded. GPU memory status:")
+#             get_gpu_memory()
+#             
+#             generator = ExLlamaV2BaseGenerator(model, cache, tokenizer)
+# 
+#             print("Warming up...")
+#             with torch.inference_mode():
+#                 settings = ExLlamaV2Sampler.Settings()
+#                 generator.generate_simple("Test", settings, 1)
+#             
+#             print("Model ready! Final GPU memory status:")
+#             get_gpu_memory()
+#             
+#             return generator
+#             
+#         except Exception as e:
+#             print(f"Error during initialization: {str(e)}")
+#             raise
 
 
 def process_text(input_text):
@@ -140,59 +140,109 @@ def process_text(input_text):
     new_vector_store = vector_store
     return new_vector_store
 
-def query_exllama(query, vector_store, tokens):
-    """
-    Thread-safe query method for ExLlamaV2 
-    """
-    # Retrieve relevant documents
-    docs = vector_store.similarity_search(query, k=10)
-    
-    # Extract and join context
-    context = "\n\n".join([doc.page_content for doc in docs])
-    
-    prompt = f"<s>[INST]Using the following Text Content, answer this question: {query}\n\nText Content:\n{context}[/INST]"
-    
-    # Ensure thread-safe generation
-    with model_lock:
-        try:        
-            settings = ExLlamaV2Sampler.Settings()
-            settings.temperature = 0.7
-            settings.top_k = 10
-            settings.token_repetition_penalty = 1.1
-            
-            with torch.inference_mode():
-                output = generator.generate_simple(
-                    prompt,
-                    settings,
-                    int(tokens),
-                    token_healing=True
-                )
-                
-                # Ensure output starts from the closest space before or at len(prompt)
-                def clean_response(output, prompt):
-                    start_idx = len(prompt)
-                
-                    # Find the closest space BEFORE or AT start_idx
-                    match = re.search(r'\s', output[:start_idx][::-1])  # Search backward for the first space
-                    if match:
-                        start_idx -= match.start() + 1  # Adjust index to cut at the space
-                
-                    return output[start_idx:].strip()
-                
-                response = clean_response(output, prompt)
-                
-                # Clean up the output
-                # response = output[len(prompt):].strip()
-                
-                torch.cuda.empty_cache()
-                gc.collect()
-                
-                return response
-        
-        except Exception as e:
-            print(f"Generation error: {str(e)}")
-            raise
+# def query_exllama(query, vector_store, tokens):
+#     """
+#     Thread-safe query method for ExLlamaV2 
+#     """
+#     # Retrieve relevant documents
+#     docs = vector_store.similarity_search(query, k=10)
+#     
+#     # Extract and join context
+#     context = "\n\n".join([doc.page_content for doc in docs])
+#     
+#     prompt = f"<s>[INST]Using the following Text Content, answer this question: {query}\n\nText Content:\n{context}[/INST]"
+#     
+#     # Ensure thread-safe generation
+#     with model_lock:
+#         try:        
+#             settings = ExLlamaV2Sampler.Settings()
+#             settings.temperature = 0.7
+#             settings.top_k = 10
+#             settings.token_repetition_penalty = 1.1
+#             
+#             with torch.inference_mode():
+#                 output = generator.generate_simple(
+#                     prompt,
+#                     settings,
+#                     int(tokens),
+#                     token_healing=True
+#                 )
+#                 
+#                 # Ensure output starts from the closest space before or at len(prompt)
+#                 def clean_response(output, prompt):
+#                     start_idx = len(prompt)
+#                 
+#                     # Find the closest space BEFORE or AT start_idx
+#                     match = re.search(r'\s', output[:start_idx][::-1])  # Search backward for the first space
+#                     if match:
+#                         start_idx -= match.start() + 1  # Adjust index to cut at the space
+#                 
+#                     return output[start_idx:].strip()
+#                 
+#                 response = clean_response(output, prompt)
+#                 
+#                 # Clean up the output
+#                 # response = output[len(prompt):].strip()
+#                 
+#                 torch.cuda.empty_cache()
+#                 gc.collect()
+#                 
+#                 return response
+#         
+#         except Exception as e:
+#             print(f"Generation error: {str(e)}")
+#             raise
+import requests
 
+def query_vllm(prompt, model_name="/mnt/f/Models/Mistral-Nemo-Instruct-2407-AWQ-4bit"):
+    """
+    Sends a chat completion request to the local vLLM API server.
+    """
+    url = "http://localhost:8009/v1/chat/completions"
+    
+    payload = {
+        "model": model_name,
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant that uses the provided text context to answer accurately."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 800,
+        "temperature": 1.0,
+        "top_p": 0.9,
+        "top_k": 25,
+        "repetition_penalty": 1.1
+    }
+    
+    headers = {"Content-Type": "application/json"}
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=120)
+        response.raise_for_status()
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+    except Exception as e:
+        print(f"Error communicating with vLLM: {e}")
+        return f"Error: {str(e)}"
+
+def query_rag(prompt_text, vector_store, k=8):
+    """
+    Retrieves relevant chunks and sends combined context to vLLM.
+    """
+    if vector_store is None:
+        return "Error: No vector store initialized."
+
+    # Retrieve top-k similar chunks
+    docs = vector_store.similarity_search(prompt_text, k=k)
+    context = "\n\n".join([doc.page_content for doc in docs])
+
+    # Combine into a single user prompt
+    full_prompt = (
+        f"Use the following text to answer the question below accurately and concisely.\n\n"
+        f"Context:\n{context}\n\n"
+        f"Question: {prompt_text}"
+    )
+
+    # Send to vLLM
+    return query_vllm(full_prompt)
 
 def process_request_worker():
     global new_vector_store
@@ -249,31 +299,50 @@ def process_pdf(pdf_path):
 
     return vector_store
 
-
 @app.route('/process_ragr', methods=['POST'])
 def process_prompt():
+    global new_vector_store
     data = request.get_json()
-    prompt_text = data['prompt_text']
-    
-    if isinstance(prompt_text, list):  
-        prompt_text = ' '.join(map(str, prompt_text))  # Convert list to string
-    
-    print(f"Data Received: {prompt_text}")
-    
-    new_tokens = 650  # Default value if conversion fails
+    prompt_text = data.get('prompt_text', '')
 
-    # Create a response queue for this request
-    response_queue = queue.Queue()
-    
-    # Add task to request queue
-    request_queue.put(("generate", (prompt_text, new_tokens), response_queue))
-    
-    # Wait for response with timeout
+    if not prompt_text:
+        return jsonify({"error": "No prompt_text provided"}), 400
+
+    print(f"RAG Query: {prompt_text}")
+
     try:
-        result = response_queue.get(timeout=120)  # 60 seconds timeout
-        return jsonify(result)
-    except queue.Empty:
-        return jsonify({"error": "Request timed out"}), 504
+        result = query_rag(prompt_text, new_vector_store)
+        return jsonify({"result": result})
+    except Exception as e:
+        print(f"Error processing RAG request: {e}")
+        return jsonify({"error": str(e)}), 500
+      
+      
+# 
+# @app.route('/process_ragr', methods=['POST'])
+# def process_prompt():
+#     data = request.get_json()
+#     prompt_text = data['prompt_text']
+#     
+#     if isinstance(prompt_text, list):  
+#         prompt_text = ' '.join(map(str, prompt_text))  # Convert list to string
+#     
+#     print(f"Data Received: {prompt_text}")
+#     
+#     new_tokens = 650  # Default value if conversion fails
+# 
+#     # Create a response queue for this request
+#     response_queue = queue.Queue()
+#     
+#     # Add task to request queue
+#     request_queue.put(("generate", (prompt_text, new_tokens), response_queue))
+#     
+#     # Wait for response with timeout
+#     try:
+#         result = response_queue.get(timeout=120)  # 60 seconds timeout
+#         return jsonify(result)
+#     except queue.Empty:
+#         return jsonify({"error": "Request timed out"}), 504
 
 # @app.route('/start_rag', methods=['POST'])
 # def start_rag():
@@ -295,7 +364,8 @@ def process_prompt():
 @app.route('/ragr_upload', methods=['POST'])
 def ragr_upload():
     global new_vector_store
-    UPLOAD_FOLDER = "/mnt/c/Users/eo276194/Desktop/Ragr/temp"  # Change this to an existing path
+    UPLOAD_FOLDER = "/mnt/c/Users/Admin/Desktop/Ragr/temp"  # Change this to an existing path
+    # UPLOAD_FOLDER = "/mnt/c/Users/eo276194/Desktop/Ragr/temp"  # Change this to an existing path
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
     # Check if a file is in the request
     if 'file' not in request.files:
@@ -327,8 +397,8 @@ def ragr_upload():
 
 if __name__ == '__main__':
     # Initialize the model before starting the server
-    # initialize_model("/mnt/f/Models/v2/exllamaSepPrompts_8.0bpw/")
-    initialize_model("/mnt/c/users/eo276194/desktop/Models/Mistral-7B-Instruct-v0.2_8.0bpw/")
+    # initialize_model("/mnt/f/Models/Mistral-7B-Instruct-v0.2-8.0bpw")
+    # initialize_model("/mnt/c/users/eo276194/desktop/Models/Mistral-7B-Instruct-v0.2_8.0bpw/")
 
 
     # Start worker threads
