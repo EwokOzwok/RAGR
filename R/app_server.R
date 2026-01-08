@@ -241,7 +241,7 @@ app_server <- function(input, output, session) {
   #   promise <- future({
   #     tryCatch({
   #       response <- POST(
-  #         "https://evanozmat.com/start_rag",
+  #         "http://localhost:5099/start_rag",
   #         body = toJSON(rag_data, auto_unbox = TRUE),
   #         encode = "json",
   #         content_type_json()
