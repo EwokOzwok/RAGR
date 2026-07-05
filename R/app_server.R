@@ -165,7 +165,7 @@ app_server <- function(input, output, session) {
                 $('#custom-error').text('Uploading...').show();
 
                 $.ajax({
-                    url: 'http://localhost:5099/ragr_upload', // Your Plumber API endpoint
+                    url: '/ragr_upload', // Your Plumber API endpoint
                     type: 'POST',
                     data: formData,
                     processData: false,
