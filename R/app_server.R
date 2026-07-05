@@ -217,6 +217,67 @@ app_server <- function(input, output, session) {
 
 
 
+<<<<<<< HEAD
+=======
+  # observeEvent(input$start_rag,{
+  #
+  #   rag_data <- list(
+  #     text = pdf_text_content()
+  #   )
+  #
+  #   # Make async HTTP request
+  #   promise <- future({
+  #     tryCatch({
+  #       response <- POST(
+  #         "http://localhost:5099/start_rag",
+  #         body = toJSON(rag_data, auto_unbox = TRUE),
+  #         encode = "json",
+  #         content_type_json()
+  #       )
+  #       content(response, "parsed")
+  #     }, error = function(e) {
+  #       stop(e)
+  #     })
+  #   })
+  #
+  #   resolve_promise(
+  #     promise,
+  #     success = function(result) {
+  #       print(result$status)
+  #
+  #       if (result$status == "SUCCESS") {
+  #         output$StepOne <- renderUI({})
+  #         output$StepTwo <- renderUI({})
+  #         output$StepThree <- renderUI({
+  #           tagList(
+  #             f7Block(
+  #               f7Shadow(
+  #                 intensity = 5,
+  #                 hover = TRUE,
+  #                 f7Card(
+  #                   f7Align(h3("PDF Successfully Initialized!"), side = c("center")),
+  #                   br(),
+  #                   f7Button("start_chat", "Start Chatting with your PDF"),
+  #                 )
+  #               )
+  #             )
+  #           )
+  #         })
+  #
+  #
+  #
+  #       }
+  #     },
+  #     error = function(err) {
+  #       ServerError <- paste("Error in communication with the server.", err, sep = " ")
+  #       print(ServerError)
+  #     }
+  #   )
+  #
+  #
+  # })
+
+>>>>>>> 1fc1ecf0c1410cd82d2c0c104b6478b11166b89e
   observeEvent(input$start_chat,{
     output$StepThree <- renderUI({})
     output$StepFour <- renderUI({
