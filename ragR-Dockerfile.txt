@@ -1,15 +1,20 @@
 FROM rocker/verse:4.4
-
 LABEL maintainer="Evan Ozmat <eozmat@albany.edu>"
 
 # Set environment variables to avoid prompts during package installations
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies for pdftools
+# --- ADDED: python3, python3-pip, python3-venv for the bundled Flask backend ---
+# --- ADDED: nginx to route the single exposed port to Shiny + Flask internally ---
 RUN apt-get update && apt-get install -y \
     libpoppler-cpp-dev \
     libssl-dev \
     libcurl4-openssl-dev \
+    python3 \
+    python3-pip \
+    python3-venv \
+    nginx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,12 +25,32 @@ RUN apt-get update && apt-get install -y \
 RUN R -q -e "install.packages(c('shiny', 'rmarkdown', 'pdftools', 'shinyjs', 'callr', 'future', 'shinyalert', 'shinyMobile'))"
 
 # Install dependencies of the app and app from GitHub
-RUN R -q -e "install.packages('remotes', repos='https://cloud.r-project.org/'); \
+RUN R -q -e "options(remotes.update = 'never'); \
+              install.packages('remotes', repos='https://cloud.r-project.org/'); \
               remotes::install_github('EwokOzwok/RAGR', force = TRUE)"
 
+# --- ADDED: install the Python backend into the image ---
+WORKDIR /app/backend
+COPY backend/requirements.txt .
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+COPY backend/app.py .
+
+# --- ADDED: temp upload folder now lives inside the container ---
+RUN mkdir -p /app/backend/temp
+
+# --- ADDED: internal nginx config, listens on 5098 (the one port we expose),
+#     routes /ragr_upload, /process_ragr, /start_rag, /health to Flask on 5099,
+#     and routes everything else (Shiny UI + websockets) to Shiny on internal port 5100 ---
+COPY nginx.conf /etc/nginx/sites-enabled/default
+
+# --- ADDED: startup script that launches Flask, Shiny, and nginx together ---
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 # Expose ports
+# --- CHANGED: only 5098 needs to be published now — nginx is the single
+#     entry point and internally routes to Flask (5099) and Shiny (5100) ---
 EXPOSE 5098
 
-# Command to run the app
-CMD ["R", "-q", "-e", "options(shiny.port=5098, shiny.host='0.0.0.0'); library(RAGR); RAGR::run_app()"]
+# --- CHANGED: run the startup script instead of launching Shiny directly ---
+CMD ["/start.sh"]
