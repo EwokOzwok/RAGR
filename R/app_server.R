@@ -217,8 +217,7 @@ app_server <- function(input, output, session) {
 
 
 
-<<<<<<< HEAD
-=======
+
   # observeEvent(input$start_rag,{
   #
   #   rag_data <- list(
@@ -277,7 +276,6 @@ app_server <- function(input, output, session) {
   #
   # })
 
->>>>>>> 1fc1ecf0c1410cd82d2c0c104b6478b11166b89e
   observeEvent(input$start_chat,{
     output$StepThree <- renderUI({})
     output$StepFour <- renderUI({
